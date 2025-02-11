@@ -1,3 +1,8 @@
+# GUI Python Password Manager by matinwgg
+# License: [Yet-to-be]
+# Author: Odoom Abdul-Matin
+
+
 import tkinter
 import pyperclip
 import csv
@@ -10,10 +15,10 @@ from customtkinter import *
 from CTkTable import *
 
 
-LABEL_FONT = ("Sans-Serif", 14)
-BUTTON_FONT = ("Roboto", 15, "bold")
-ENTRY_FONT = ("Sans-Serif", 20)
-SMALL_LABEL_FONT = ("Sans-Serif", 10, "bold")
+LABEL_FONT = ("Sans-Serif", 17)
+BUTTON_FONT = ("Roboto", 16, "bold")
+ENTRY_FONT = ("Sans-Serif", 23)
+SMALL_LABEL_FONT = ("Sans-Serif", 15, "bold")
 
 value = []
 
@@ -27,28 +32,17 @@ def display_username():
                 for row in lines:
                     username = row['username']
                     value.append([username])
+                return value
             else:
                 return []
     except FileNotFoundError():
         print("File not found")
 
 
-def show_data():
-    table = CTkTable(master=app.scrollable_frame,
-                     row=50, column=1, values=value, font=LABEL_FONT, anchor='w', corner_radius=0)
-    table.pack(expand=True, fill="both", padx=10, pady=10)
-
-    # Add the selector
-    row_selector = CTkTableRowSelector(
-        table, can_select_headers=True)
-
-    text = row_selector.get()
-
-
 class AddPasswordPage(ctk.CTkToplevel):
     def __init__(self):
         super().__init__()
-        self.geometry("600x400")
+        self.geometry("700x600")
         self.resizable(False, False)
         self.title("Add a password")
 
@@ -111,7 +105,6 @@ class AddPasswordPage(ctk.CTkToplevel):
         return None
 
     def is_site_present(self):
-        print("hey therre")
         with open(self.file_1, "r", newline="") as csvfile:
             reader = csv.DictReader(
                 csvfile, fieldnames=["username", "password"])
@@ -121,26 +114,30 @@ class AddPasswordPage(ctk.CTkToplevel):
             return None
 
     def set_data(self):
-        try:
-            if self.site.get() and self.password.get():
-                f = open(self.file_1, "r", newline="")
-                reader = csv.DictReader(
-                    f, fieldnames=["username", "password"])
+        if self.site.get() and self.password.get():
+            f = open(self.file_1, "r", newline="")
+            reader = csv.DictReader(
+                f, fieldnames=["username", "password"])
 
-                with open(self.file_1, "a", newline="") as csvfile:
-                    writer = csv.DictWriter(
-                        csvfile, fieldnames=["username", "password"])
+            with open(self.file_1, "a", newline="") as csvfile:
+                writer = csv.DictWriter(
+                    csvfile, fieldnames=["username", "password"])
 
-                    for self.row in reader:
-                        if self.row == self.is_site_present():
-                            self.row['password'] = self.password.get()
-                            print("got here!")
-                            writer.writerow(
-                                {"site": self.site.get().rstrip(), "password": self.password.get()})
-        except Exception as e:
-            print("No entry should be left blank.")
+                for self.row in reader:
+                    if self.row == self.is_site_present():
+                        self.row['password'] = self.password.get()
 
-        self.clear_frame()
+                        writer.writerow(
+                            {"site": self.site.get().rstrip(), "password": self.password.get()})
+                        break
+                writer.writerow(
+                    {"username": self.site.get().rstrip(), "password": self.password.get()})
+            self.clear_frame()
+        else:
+            error_message = "Entry cannot be blank"
+            self.err = ctk.CTkLabel(
+                master=self.self.frame1, height=15, text=error_message, font=("Sans-Serif", 15, "bold"), text_color='#af1717')
+            self.err.place(relx=0.4, rely=0.45)
 
     def clear_frame(self):
         # Get the list of child widgets in the frame
@@ -171,20 +168,19 @@ class AddPasswordPage(ctk.CTkToplevel):
 
     def exit_window(self):
         self.destroy()
-        show_data()
 
 
 class App(ctk.CTk, AddPasswordPage):
     def __init__(self):
         super().__init__()
         self.title("Password Manager")
-        self.geometry("800x600")
+        self.geometry("1000x900")
         self.resizable(False, False)
         self.initial_page()
 
     def initial_page(self):
         self.wallpaper = ctk.CTkImage(
-            dark_image=Image.open("pattern.png"), size=(800, 800))
+            dark_image=Image.open("pattern.png"), size=(1000, 1000))
         self.wall_pic = ctk.CTkLabel(
             master=self, image=self.wallpaper, text='')
         self.wall_pic.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
@@ -208,63 +204,71 @@ class App(ctk.CTk, AddPasswordPage):
         # Username label
         self.label_username = ctk.CTkLabel(
             master=self.initial_frame, text=username, font=LABEL_FONT, width=30)
-        self.label_username.pack(padx=50, pady=(120, 0), anchor=W)
+        self.label_username.pack(padx=70, pady=(150, 0), anchor=W)
 
         # Username field
         self.initial_entry_username = ctk.CTkEntry(
-            master=self.initial_frame,  height=32, width=300, font=ENTRY_FONT)
-        self.initial_entry_username.pack(padx=12)  # pady= 120, 10
+            master=self.initial_frame,  height=31, width=370, font=ENTRY_FONT)
+        self.initial_entry_username.pack(
+            padx=25, pady=(8, 0))  # pady= 120, 10
         self.initial_entry_username.focus()
 
         # Password label
         self.label_password = ctk.CTkLabel(
             master=self.initial_frame, text=password, font=LABEL_FONT, width=30)
-        self.label_password.pack(padx=50, pady=(10, 0), anchor=W)
+        self.label_password.pack(padx=70, pady=(15, 0), anchor=W)
 
         # Password field with eye button
         self.initial_entry_password = ctk.CTkEntry(
-            master=self.initial_frame, show='•', height=32, width=300, font=ENTRY_FONT)
-        self.initial_entry_password.pack(padx=12, pady=0)
+            master=self.initial_frame, show='•', height=31, width=370, font=ENTRY_FONT)
+        self.initial_entry_password.pack(padx=25, pady=0)
 
         # Login Button
         self.button_login = ctk.CTkButton(
-            self.initial_frame, text="Login", command=self.check_pwd, width=300)
-        self.button_login.pack(padx=12, pady=(30, 0))
+            self.initial_frame, text="Login", command=self.check_pwd, width=350, height=30, font=BUTTON_FONT)
+        self.button_login.pack(padx=25, pady=(50, 0))
 
         # Add account Button
         self.button_create_account = ctk.CTkButton(
-            master=self.initial_frame, text="Add Account", command=self.create_account, width=300)
+            master=self.initial_frame, text="Add Account", command=self.create_account, width=350, height=30, font=BUTTON_FONT)
         self.button_create_account.pack(
-            padx=(0, 0), pady=(0, 70), side="bottom")
+            padx=25, pady=(0, 100), side="bottom")
 
         self.label_base_msg = ctk.CTkLabel(
-            self, text="Powered by matinwgg corp.", font=('Helvetica', 15))
+            self, text="Powered by matinwgg corp.", font=('Helvetica', 20))
         self.label_base_msg.pack(pady=(0, 10), side="bottom")
 
     def check_pwd(self):
-        flag = False
-        if self.initial_entry_username.get() or self.initial_entry_password.get():
-            self.file1 = self.initial_entry_username.get()[-3:] + "vault.csv"
-            self.chk_pwd = hashlib.sha256(
-                self.initial_entry_password.get().encode()).hexdigest()
-            with open("password.csv", "r") as csvfile:
-                reader = csv.DictReader(csvfile, fieldnames=[
-                                        "username", "password"])
-                for row in reader:
-                    if row['username'] == self.initial_entry_username.get():
-                        if self.chk_pwd == row['password']:
-                            self.login()
-                            flag = True
-                if flag == False:
-                    self.error_message = "Provide valid username and password"
-                    self.err = ctk.CTkLabel(
-                        master=self.initial_frame, height=15, text=self.error_message, font=SMALL_LABEL_FONT, text_color='#af1717')
-                    self.err.place(relx=0.4, rely=0.45)
-        else:
-            self.error_message = "Provide valid username and password"
+        try:
+            flag = False
+            if self.initial_entry_username.get() or self.initial_entry_password.get():
+                self.file1 = self.initial_entry_username.get(
+                )[-3:] + "vault.csv"
+                self.chk_pwd = hashlib.sha256(
+                    self.initial_entry_password.get().encode()).hexdigest()
+                with open("password.csv", "r") as csvfile:
+                    reader = csv.DictReader(csvfile, fieldnames=[
+                                            "username", "password"])
+                    for row in reader:
+                        if row['username'] == self.initial_entry_username.get():
+                            if self.chk_pwd == row['password']:
+                                self.login()
+                                flag = True
+                    if flag == False:
+                        self.error_message = "Provide valid username and password"
+                        self.err = ctk.CTkLabel(
+                            master=self.initial_frame, height=15, text=self.error_message, font=SMALL_LABEL_FONT, text_color='#af1717')
+                        self.err.place(relx=0.4, rely=0.45)
+            else:
+                self.error_message = "Provide valid username and password"
+                self.err = ctk.CTkLabel(
+                    master=self.initial_frame, height=15, text=self.error_message, font=SMALL_LABEL_FONT, text_color='#af1717')
+                self.err.place(relx=0.4, rely=0.43)
+        except FileNotFoundError as e:
+            self.error_message = "Make sure that you have an account"
             self.err = ctk.CTkLabel(
                 master=self.initial_frame, height=15, text=self.error_message, font=SMALL_LABEL_FONT, text_color='#af1717')
-            self.err.place(relx=0.4, rely=0.45)
+            self.err.place(relx=0.4, rely=0.28)
 
     def create_account(self):
         self.initial_frame.pack_forget()
@@ -280,13 +284,13 @@ class App(ctk.CTk, AddPasswordPage):
 
         # Navigate to previous page
         self.back_button = ctk.CTkButton(
-            master=self.create_account_frame, text="Back", width=30, corner_radius=12, command=self.exit_window)
+            master=self.create_account_frame, text="Back", width=60, height=50, corner_radius=12, command=self.exit_window, font=BUTTON_FONT)
         self.back_button.place(relx=0.07, rely=0.05)
 
         # Make create account label
         self.label_create_account = ctk.CTkLabel(
-            master=self.create_account_frame, text="Create a new account", font=("Nanum Gothic", 20, "bold"), width=30)
-        self.label_create_account.pack(pady=(30, 10))
+            master=self.create_account_frame, text="Create a new account", font=("Nanum Gothic", 30, "bold"), width=30)
+        self.label_create_account.pack(pady=(130, 10))
 
         # Make a confirmation message to user his account has been created
         self.label_font = ctk.CTkFont(
@@ -301,39 +305,40 @@ class App(ctk.CTk, AddPasswordPage):
         # email
         self.lbl_email = ctk.CTkLabel(
             master=self.create_account_frame, text="Email", font=LABEL_FONT)
-        self.lbl_email.pack(padx=200, pady=(5, 0), anchor=ctk.W)
+        self.lbl_email.pack(padx=280, pady=(20, 0), anchor=ctk.W)
         self.entry_email = ctk.CTkEntry(
-            master=self.create_account_frame, placeholder_text="", height=35, width=300, font=ENTRY_FONT)
-        self.entry_email.pack(padx=200, pady=(0, 5), anchor=ctk.W)
+            master=self.create_account_frame, placeholder_text="", height=35, width=370, font=ENTRY_FONT)
+        self.entry_email.pack(padx=(280, 240), pady=(0, 5), anchor=ctk.W)
 
         # username
         self.lbl_username = ctk.CTkLabel(
             master=self.create_account_frame, text="Username", font=LABEL_FONT)
-        self.lbl_username.pack(padx=200, pady=(10, 0), anchor=ctk.W)
+        self.lbl_username.pack(padx=280, pady=(10, 0), anchor=ctk.W)
         self.entry_username = ctk.CTkEntry(
-            master=self.create_account_frame, height=35, width=300, font=ENTRY_FONT)
-        self.entry_username.pack(padx=200, pady=(0, 5), anchor=ctk.W)
+            master=self.create_account_frame, height=35, width=370, font=ENTRY_FONT)
+        self.entry_username.pack(padx=(280, 240), pady=(0, 5), anchor=ctk.W)
 
         # Password
         self.lbl_pwd = ctk.CTkLabel(
             master=self.create_account_frame, text="Password", font=LABEL_FONT)
-        self.lbl_pwd.pack(padx=200, pady=(5, 0), anchor=ctk.W)
+        self.lbl_pwd.pack(padx=280, pady=(5, 0), anchor=ctk.W)
         self.entry_password = ctk.CTkEntry(
-            master=self.create_account_frame, height=35, show='•', width=300,  font=ENTRY_FONT)
-        self.entry_password.pack(padx=200, pady=(0, 5), anchor=ctk.W)
+            master=self.create_account_frame, height=35, show='•', width=370,  font=ENTRY_FONT)
+        self.entry_password.pack(padx=(280, 240), pady=(0, 5), anchor=ctk.W)
 
         # Confirm password
         self.lbl_confirm = ctk.CTkLabel(
             master=self.create_account_frame, text="Confirm password", font=LABEL_FONT)
-        self.lbl_confirm.pack(padx=200, pady=(5, 0), anchor=ctk.W)
+        self.lbl_confirm.pack(padx=280, pady=(5, 0), anchor=ctk.W)
         self.entry_confirm_password = ctk.CTkEntry(
-            master=self.create_account_frame, height=35, show='•', width=300,  font=ENTRY_FONT)
-        self.entry_confirm_password.pack(padx=200, pady=(0, 0), anchor=ctk.W)
+            master=self.create_account_frame, height=35, show='•', width=370,  font=ENTRY_FONT)
+        self.entry_confirm_password.pack(
+            padx=(280, 240), pady=(0, 0), anchor=ctk.W)
 
         # Make a DONE button to exit the application
         self.create_button = ctk.CTkButton(
-            master=self.create_account_frame, text="Create account", height=35, width=300, command=lambda: self.register())
-        self.create_button.pack(pady=(50, 0))
+            master=self.create_account_frame, text="Create account", font=LABEL_FONT, height=35, width=370, command=lambda: self.register())
+        self.create_button.pack(padx=(280, 240), pady=(60, 0))
        # Check csv file for already existing user details
 
     def is_user_present(self, username, password):
@@ -369,12 +374,6 @@ class App(ctk.CTk, AddPasswordPage):
             if self.entry_username.focus() or self.entry_password.focus() or self.entry_confirm_password.focus():
                 self.error.destroy()
 
-        # Is username and password already set?
-        elif self.is_user_present(self.entry_username.get(), self.entry_password.get()):
-            self.error_msg = "Username already exists!"
-            self.error = ctk.CTkLabel(
-                master=self.create_account_frame, text=self.error_msg, font=LABEL_FONT, text_color='#af1717')
-            self.error.place(relx=0.5, rely=0.30)
         elif self.entry_password.get() == self.entry_confirm_password.get():
             self.hashed_password = hashlib.sha256(
                 self.entry_password.get().encode()).hexdigest()
@@ -385,6 +384,14 @@ class App(ctk.CTk, AddPasswordPage):
                 writer.writerow(
                     {"username": self.entry_username.get().rstrip(), "password": self.hashed_password})
             self.clear_register_frame()
+
+        # Is username and password already set?
+        elif self.is_user_present(self.entry_username.get(), self.entry_password.get()):
+            self.error_msg = "Username already exists!"
+            self.error = ctk.CTkLabel(
+                master=self.create_account_frame, text=self.error_msg, font=LABEL_FONT, text_color='#af1717')
+            self.error.place(relx=0.5, rely=0.30)
+
         elif self.entry_password.get() != self.entry_confirm_password.get():
             self.error_msg = "Passwords do not match!"
             self.error = ctk.CTkLabel(
@@ -410,7 +417,7 @@ class App(ctk.CTk, AddPasswordPage):
         self.some_text = ctk.CTkLabel(
             master=self.create_account_frame, font=("Sans-Serif", 30, "bold"), text=self.msg, wraplength=400)
         self.some_text.pack(
-            padx=(50, 80), pady=(120, 30), fill=BOTH)
+            padx=(50, 80), pady=(200, 30), fill=BOTH)
         self.exit_btn = ctk.CTkButton(
             master=self.create_account_frame, font=BUTTON_FONT, text="Exit", command=self.exit_window)
         self.exit_btn.pack(
@@ -443,7 +450,6 @@ class App(ctk.CTk, AddPasswordPage):
     def delete(self):
         self.index_to_delete = self.index()
         if self.index_to_delete is None:
-            print("Row to delete not found.")
             return
 
         with open(self.filename_, "r",) as csvfile:
@@ -461,6 +467,7 @@ class App(ctk.CTk, AddPasswordPage):
         self.delete_msg.place(relx=0.16, rely=0.05)
 
     def copy(self):
+        self.delete_msg = None
         with open(self.filename_, "r", newline="") as csvfile:
             lines = csv.DictReader(csvfile, fieldnames=[
                 "username", "password"])
@@ -480,9 +487,6 @@ class App(ctk.CTk, AddPasswordPage):
         else:
             self.copied_msg.place(relx=0.16, rely=0.05)
 
-    def show_table(self):
-        display_username()
-
     def login(self):
         self.initial_frame.place_forget()
         self.add_password_page = None
@@ -494,34 +498,27 @@ class App(ctk.CTk, AddPasswordPage):
             master=self, text="Back", width=70, height=40, font=BUTTON_FONT, corner_radius=12, command=self.exit_win)
         self.back_button.place(relx=0.03, rely=0.04)
 
-        # Get the current state of the your password vault
-        # self.refresh_button = ctk.CTkButton(
-        #     master=self, text="Refresh", font=BUTTON_FONT, height=37, width=70, corner_radius=12, command=self.refresh_table)
-        # self.refresh_button.place(relx=0.15, rely=0.04)
-
         self.guide_text = ctk.CTkLabel(
             master=self, text="Create, save and manage your passwords\n that you can easily sign in\n to sites and apps.", text_color="#7d7a7a", font=("sans-serif", 15))
         self.guide_text.place(relx=0.3, rely=0.03)
 
         self.add_password_button = ctk.CTkButton(
-            master=self, text="Add Password", font=BUTTON_FONT, height=33, width=140, command=self.add_to_passwords)
-        self.add_password_button.place(relx=0.785, rely=0.02)
+            master=self, text="Add Password", font=BUTTON_FONT, height=35, width=160, command=self.add_to_passwords)
+        self.add_password_button.place(relx=0.82, rely=0.07)
 
         self.option = ctk.StringVar(value="Options")
         self.option_menu = ctk.CTkOptionMenu(master=self, values=[
             "Copy", "Delete"],
-            height=31, width=140, command=self.callbacks, variable=self.option, font=BUTTON_FONT)
-        self.option_menu.place(relx=0.785, rely=0.1)
+            height=35, width=160, command=self.callbacks, variable=self.option, font=BUTTON_FONT)
+        self.option_menu.place(relx=0.62, rely=0.07)
 
         # # Make a scrollable frame
         self.scrollable_frame = ctk.CTkScrollableFrame(
-            master=self, width=745, height=530)
-        self.scrollable_frame.pack(padx=10, pady=(100, 0))
-
-        self.show_table()
+            master=self, width=950, height=800)
+        self.scrollable_frame.pack(padx=10, pady=(130, 0))
 
         self.table = CTkTable(master=self.scrollable_frame,
-                              row=50, column=1, values=value, font=LABEL_FONT, anchor='w', corner_radius=0)
+                              row=50, column=1, values=display_username(), font=LABEL_FONT, anchor='w', corner_radius=0)
         self.table.pack(expand=True, fill="both", padx=10, pady=10)
 
         # Add the selector
