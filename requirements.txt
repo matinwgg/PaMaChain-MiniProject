@@ -1,0 +1,12 @@
+
+---
+
+## `requirements.txt`
+```text
+argon2-cffi
+pycryptodome
+customtkinter
+websockets
+pytest
+pytest-asyncio
+```

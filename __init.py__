@@ -1,0 +1,7 @@
+# Optional: Package metadata
+__version__ = "1.0.0"
+__author__ = "Your Name"
+
+# Optional: Import key modules or classes for easier access
+from .gui.main_window import MainWindow
+from .core.password_manager import hash_password, verify_password

@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "pamachain"
+version = "0.1.0"
+description = "Decentralised trustless password manager mini-project"
+authors = [{name="Your Name"}]
+dependencies = [
+    "argon2-cffi",
+    "pycryptodome",
+    "customtkinter",
+    "websockets"
+]
