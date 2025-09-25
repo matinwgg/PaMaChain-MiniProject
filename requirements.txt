@@ -9,3 +9,4 @@ base58
 qrcode
 Pillow
 ecdsa
+pytest-xvfb
