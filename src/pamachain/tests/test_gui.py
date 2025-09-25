@@ -13,7 +13,7 @@ from pamachain.gui.vault_frame import VaultFrame
 
 # Skip GUI tests if DISPLAY is not available (headless environments like CI)
 skip_headless = pytest.mark.skipif(
-    os.environ.get("DISPLAY", "") == "",
+    os.environ.get("DISPLAY") is None or os.environ.get("DISPLAY") == "",
     reason="No display available for Tkinter"
 )
 
