@@ -8,3 +8,4 @@ pynacl
 base58
 qrcode
 Pillow
+ecdsa

@@ -1,3 +1,8 @@
+# pyproject.toml
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "pamachain"
 version = "0.1.0"
