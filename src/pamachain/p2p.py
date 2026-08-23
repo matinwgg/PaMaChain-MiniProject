@@ -1,8 +1,8 @@
-"""Small authenticated peer protocol for PaMaChain.
+"""Transport-neutral peer protocol primitives for PaMaChain.
 
-This module deliberately separates transport from ledger validation. Peers exchange
-JSON envelopes over any byte-stream transport; callers must validate received blocks
-with the ledger's verify_chain() before accepting them.
+The envelope provides framing and size/type validation. It is intentionally not an
+authentication mechanism: callers must authenticate the transport and validate every
+received chain cryptographically before accepting it.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ class PeerMessage:
 
     def encode(self) -> bytes:
         body = {"v": PROTOCOL_VERSION, "kind": self.kind, "id": self.request_id, "payload": self.payload}
-        encoded = json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+        encoded = json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
         if len(encoded) > MAX_MESSAGE_BYTES:
             raise ValueError("peer message exceeds size limit")
         return encoded + b"\n"
@@ -46,8 +46,8 @@ class PeerMessage:
 
 
 def block_fingerprint(block: dict[str, Any]) -> str:
-    """Return a stable identifier for deduplication, not a trust decision."""
-    canonical = json.dumps(block, sort_keys=True, separators=(",", ":")).encode()
+    """Stable digest for deduplication; this does not establish trust."""
+    canonical = json.dumps(block, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(canonical).hexdigest()
 
 
