@@ -23,11 +23,12 @@ The project investigates a systems question: how can confidential vault data, ta
 ## 🛠 Tech Stack
 
 - Python
-- `cryptography`
-- Argon2
+- PyCryptodome (AES-256-GCM)
+- Argon2id
+- ECDSA P-256
 - WebSockets
 - pytest
-- Desktop GUI tooling used by the application
+- customtkinter
 
 ## 🏗 Architecture
 
@@ -55,10 +56,11 @@ The ledger provides tamper evidence; it does not replace authenticated storage, 
 .
 ├── src/pamachain/
 │   ├── ledger/       # Ledger and integrity logic
-│   ├── keystore.py   # Persistent cryptographic identity
+│   ├── tests/        # Security and regression tests
+│   ├── keystore.py   # Salt + password-verifier metadata
+│   ├── paths.py      # Overridable state-file locations
 │   ├── p2p_network.py# Experimental peer transport
 │   └── ...
-├── tests/            # Security and regression tests
 ├── requirements.txt
 └── README.md
 ```
@@ -75,19 +77,40 @@ git clone https://github.com/matinwgg/PaMaChain-MiniProject.git
 cd PaMaChain-MiniProject
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e ".[dev]"
 pytest -q
-python -m pamachain.cli --init
-python -m pamachain.cli --add github myStrongPassword
+pamachain --init
+pamachain --add github
+pamachain --view
 ```
+
+`pamachain --add LABEL` prompts for the secret instead of accepting it as an
+argument, so it does not leak through shell history or the process list.
 
 ## 💻 Usage
 
 Use the CLI to initialize a local vault, add credentials, and inspect the ledger. Treat the local key material and vault files as sensitive state.
 
+Both the CLI and the GUI derive the master key from the password and verify it
+against an authenticated verifier stored in `~/.pamachain_keystore.json`; a
+wrong password is rejected before any entry is decrypted. The GUI displays
+decrypted secrets and clears the derived key on logout.
+
+State files are `~/.pamachain_ledger.jsonl` (ledger),
+`~/.pamachain_ledger_signing_key.pem` (ECDSA identity),
+`~/.pamachain_ledger.head.json` (anchored head), and
+`~/.pamachain_keystore.json` (salt + verifier). The `PAMACHAIN_LEDGER`,
+`PAMACHAIN_LEDGER_KEY`, `PAMACHAIN_LEDGER_ANCHOR`, and `PAMACHAIN_KEYSTORE`
+environment variables override them, which is how the test suite isolates
+itself.
+
 ## 🔐 Security Model
 
-The project separates confidentiality, integrity, identity, and transport concerns. The P2P layer remains a research prototype: resource validation is present, but a production network needs authenticated peer identities, signed network messages, replay protection, trust establishment, key rotation, and TLS/WSS.
+The project separates confidentiality, integrity, identity, and transport concerns. The ledger is tamper-evident: each block is signed, and the latest head is stored in a separate anchor file so truncation or deletion is detected. The head is still only anchored locally; an attacker who can rewrite both the ledger and the anchor can rewrite history. A production system needs an independent anchor (or a real chain).
+
+The P2P layer remains a research prototype: resource validation is present, but a production network needs authenticated peer identities, signed network messages, replay protection, trust establishment, key rotation, and TLS/WSS.
+
+If an older ledger predates the anchor file, `pamachain --repair-anchor` will verify the chain and write the current head. Run it only after reviewing the ledger, because it explicitly trusts whatever history is present.
 
 ## 🧪 Testing
 
@@ -103,7 +126,11 @@ Tests should cover tampering, corrupted records, invalid signatures, wrong keys,
 - Peer trust/identity establishment
 - Replay protection and sequence numbers
 - Secure key rotation
-- Durable concurrent storage
+- Remote/independent ledger anchoring (the local anchor detects accidental or
+  naive tampering, not an attacker with full filesystem access)
+- Encrypting the signing key at rest or storing it in an OS keychain (it is
+  currently protected by `0600` filesystem permissions only)
+- Encrypting ledger labels (only the secret values are encrypted)
 - Formal threat model and security review
 
 ## 🤝 Contributing
