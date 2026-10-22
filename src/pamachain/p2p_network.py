@@ -48,11 +48,12 @@ async def handler(ws):
         PEERS.discard(ws)
 
 
-async def start_node(port=8765):
-    async with websockets.serve(handler, "0.0.0.0", port, max_size=MAX_MESSAGE_BYTES):
-        print(f"P2P node listening on {port}")
+async def start_node(port=8765, host="127.0.0.1"):
+    """Listen on loopback by default; pass host="0.0.0.0" to accept peers."""
+    async with websockets.serve(handler, host, port, max_size=MAX_MESSAGE_BYTES):
+        print(f"P2P node listening on {host}:{port}")
         await asyncio.Future()
 
 
-def run_node(port=8765):
-    asyncio.run(start_node(port))
+def run_node(port=8765, host="127.0.0.1"):
+    asyncio.run(start_node(port, host))

@@ -8,9 +8,12 @@ from __future__ import annotations
 
 import base64
 import binascii
+import hmac
 
-from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
+# PyCryptodome intentionally uses the historical ``Crypto`` namespace. Bandit's
+# B413 rule matches that name and mistakes it for the abandoned pycrypto package.
+from Crypto.Cipher import AES  # nosec B413
+from Crypto.Random import get_random_bytes  # nosec B413
 from argon2.low_level import Type, hash_secret_raw
 
 _SALT_SIZE = 16
@@ -87,3 +90,28 @@ def decrypt_string(encoded: str, key: bytes) -> str:
     except (binascii.Error, ValueError) as exc:
         raise ValueError("encrypted value is not valid base64") from exc
     return decrypt(blob, key).decode("utf-8")
+
+
+# A verifier lets the keystore prove that a supplied master password derives the
+# same key used when the vault was created. Only the authenticated ciphertext is
+# stored; the plaintext marker below is public and not a secret.
+VERIFIER_TEXT = "pamachain-keystore-verifier-v1"
+
+
+def make_verifier(key: bytes) -> str:
+    """Return a password-check value that is safe to store next to the salt."""
+    if len(key) != _KEY_SIZE:
+        raise ValueError("key must be exactly 32 bytes")
+    return encrypt_string(VERIFIER_TEXT, key)
+
+
+def verify_key(key: bytes, verifier: str) -> bool:
+    """Return True when ``key`` is the key that created ``verifier``."""
+    if not isinstance(verifier, str) or not verifier:
+        return False
+    if len(key) != _KEY_SIZE:
+        return False
+    try:
+        return hmac.compare_digest(decrypt_string(verifier, key), VERIFIER_TEXT)
+    except ValueError:
+        return False
